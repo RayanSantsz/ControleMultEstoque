@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="ControleMultEstoque.Application/ControleMultEstoque.Application.csproj" />
+  <Project Path="ControleMultEstoque.Domain.Tests/ControleMultEstoque.Domain.Tests.csproj" />
+  <Project Path="ControleMultEstoque.Domain/ControleMultEstoque.Domain.csproj" />
+  <Project Path="ControleMultEstoque.Infrastructure/ControleMultEstoque.Infrastructure.csproj" />
+  <Project Path="ControleMultEstoque.Web/ControleMultEstoque.Web.csproj" />
+  <Project Path="ControleMultiEstoque.API/ControleMultiEstoque.API.csproj" />
+</Solution>
