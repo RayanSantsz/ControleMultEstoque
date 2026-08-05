@@ -4,7 +4,10 @@ using System.Text;
 
 namespace ControleMultEstoque.Domain.Enums
 {
-    internal class StatusArmazem
+    public enum StatusArmazem
     {
+        Ativo,
+        EmManutencao,
+        Inativo
     }
 }
