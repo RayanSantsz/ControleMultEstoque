@@ -126,7 +126,3 @@ Projetos de inicialização configurados no Visual Studio: `ControleMultEstoque.
 - [ ] Vídeo de demonstração (até 5 min) para entrega
 
 ---
-
-## Como continuar
-
-Este README deve ser atualizado conforme cada etapa do roadmap for concluída, marcando os itens com `[x]`. Ele serve como registro do progresso e também conta pontos na avaliação de **Governança do Repositório** e **Documentação Técnica** do regulamento do hackathon.
