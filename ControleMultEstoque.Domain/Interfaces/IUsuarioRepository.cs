@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ControleMultEstoque.Domain.Interfaces
+using ControleMultEstoque.Domain.Entities;
+
+namespace ControleMultEstoque.Domain.Interfaces;
+
+public interface IUsuarioRepository : IRepositorioBase<Usuario>
 {
-    internal interface IUsuarioRepository
-    {
-    }
+    Task<Usuario?> ObterPorEmailAsync(string email);
+    Task<bool> EmailJaExisteAsync(string email);
 }
