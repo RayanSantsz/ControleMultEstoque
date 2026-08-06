@@ -28,8 +28,11 @@ O projeto segue **Clean Architecture** (arquitetura em camadas), com as dependê
 ```
 ControleMultEstoque (solution)
  ├─ src
- │   ├─ ControleMultEstoque.Domain           → regras de negócio puras (entidades)
- │   ├─ ControleMultEstoque.Application      → casos de uso, interfaces, DTOs
+ │   ├─ ControleMultEstoque.Domain           → regras de negócio puras
+ │   │    ├─ Entities/     → entidades (Armazem, Produto, ItemEstoque, Transferencia, Usuario)
+ │   │    ├─ Enums/        → StatusArmazem, StatusTransferencia, PapelUsuario
+ │   │    └─ Interfaces/   → contratos de repositório (implementados na Infrastructure)
+ │   ├─ ControleMultEstoque.Application      → casos de uso, DTOs
  │   ├─ ControleMultEstoque.Infrastructure   → EF Core, repositórios, acesso a dados
  │   ├─ ControleMultEstoque.API              → Web API (controllers, autenticação JWT)
  │   └─ ControleMultEstoque.Web              → Razor Pages (consome a API via HTTP;
@@ -62,17 +65,39 @@ Projetos de inicialização configurados no Visual Studio: `ControleMultEstoque.
 | Entidade | Arquivo | Descrição |
 |---|---|---|
 | `Armazem` | `Entities/Armazem.cs` | Unidade de armazenamento física. Controla status (Ativo/EmManutencao/Inativo) e responsável. |
-| `StatusArmazem` | `Entities/StatusArmazem.cs` | Enum de status do armazém. |
 | `Produto` | `Entities/Produto.cs` | Cadastro de catálogo (SKU, nome, categoria, preço, quantidade mínima). Independente de armazém. |
 | `ItemEstoque` | `Entities/ItemEstoque.cs` | Vínculo entre `Produto` + `Armazem`, com quantidade física, lote e validade. Movimentação apenas via `Adicionar()`/`Remover()`. |
 | `Transferencia` | `Entities/Transferencia.cs` | Ordem de movimentação de estoque entre dois armazéns. Máquina de estados: `Pendente → EmTransito → Concluida` ou `Cancelada`. |
-| `StatusTransferencia` | `Entities/StatusTransferencia.cs` | Enum de status da transferência. |
+| `Usuario` | `Entities/Usuario.cs` | Conta de acesso ao sistema. Guarda apenas o hash da senha (nunca texto puro), e-mail normalizado, papel e status ativo/inativo. |
+
+### ✅ Domain — Enums
+
+| Enum | Arquivo | Descrição |
+|---|---|---|
+| `StatusArmazem` | `Enums/StatusArmazem.cs` | Ativo / EmManutencao / Inativo. |
+| `StatusTransferencia` | `Enums/StatusTransferencia.cs` | Pendente / EmTransito / Concluida / Cancelada. |
+| `PapelUsuario` | `Enums/PapelUsuario.cs` | AdministradorGeral / ResponsavelArmazem. |
 
 **Decisões de design aplicadas em todas as entidades:**
 - Propriedades com `private set`; toda alteração de estado passa por métodos de comportamento (nunca por atribuição direta) — protege contra estados inválidos.
 - Construtores com validação (`ArgumentException` para dados inválidos, `InvalidOperationException` para transições de estado não permitidas).
 - Construtor `protected` vazio, exclusivo para o EF Core reconstruir objetos vindos do banco.
 - `Transferencia` guarda apenas os IDs de produto/armazéns envolvidos — a execução efetiva da movimentação (chamando `Remover`/`Adicionar` nos `ItemEstoque` de origem e destino, dentro de uma transação) será responsabilidade de um caso de uso na camada `Application`, garantindo consistência.
+- `Usuario` guarda somente `SenhaHash` — o cálculo do hash e a verificação de senha são responsabilidade de um serviço na Infrastructure, mantendo o Domain livre de dependência de bibliotecas de criptografia.
+- Enums organizados em pasta própria (`Enums/`), separados de `Entities/`, para facilitar navegação conforme o projeto cresce.
+
+### ✅ Domain — Interfaces de Repositório
+
+Contratos que a `Application` usa para acessar dados, sem conhecer a implementação concreta (Dependency Inversion Principle). Implementação real com EF Core fica na `Infrastructure`.
+
+| Interface | Arquivo | Métodos específicos além do CRUD básico |
+|---|---|---|
+| `IRepositorioBase<T>` | `Interfaces/IRepositorioBase.cs` | `ObterPorIdAsync`, `ObterTodosAsync`, `AdicionarAsync`, `Remover` — herdado por todos os demais. |
+| `IArmazemRepository` | `Interfaces/IArmazemRepository.cs` | `ObterPorResponsavelAsync` |
+| `IProdutoRepository` | `Interfaces/IProdutoRepository.cs` | `ObterPorSkuAsync`, `SkuJaExisteAsync` |
+| `IItemEstoqueRepository` | `Interfaces/IItemEstoqueRepository.cs` | `ObterPorProdutoEArmazemAsync`, `ObterPorArmazemAsync`, `ObterAbaixoDoMinimoAsync` |
+| `ITransferenciaRepository` | `Interfaces/ITransferenciaRepository.cs` | `ObterPorArmazemAsync`, `ObterPorStatusAsync` |
+| `IUsuarioRepository` | `Interfaces/IUsuarioRepository.cs` | `ObterPorEmailAsync`, `EmailJaExisteAsync` |
 
 ### ⚠️ Pendência a investigar
 - Um `git pull` recente não trouxe as entidades commitadas na sessão anterior (aparentemente só `Produto` chegou). Precisa verificar no GitHub se o push foi feito, se foi para a branch correta (`git branch -a`, `git status`, `git log --oneline`) antes de continuar commitando novo código por cima.
@@ -82,9 +107,9 @@ Projetos de inicialização configurados no Visual Studio: `ControleMultEstoque.
 ## Roadmap — o que falta fazer
 
 ### Domain (finalizar núcleo de regras)
-- [ ] Entidade `Usuario` (necessária para autenticação própria — papéis: Administrador Geral, Responsável por Armazém)
+- [x] Entidade `Usuario` (necessária para autenticação própria — papéis: Administrador Geral, Responsável por Armazém)
+- [x] Interfaces de repositório (`IRepositorioBase`, `IArmazemRepository`, `IProdutoRepository`, `IItemEstoqueRepository`, `ITransferenciaRepository`, `IUsuarioRepository`) — o "contrato" entre Domain/Application e Infrastructure
 - [ ] Value Objects, se necessário (ex: `Email`, `Senha`/hash)
-- [ ] Interfaces de repositório (`IArmazemRepository`, `IProdutoRepository`, `IItemEstoqueRepository`, `ITransferenciaRepository`, `IUsuarioRepository`) — o "contrato" entre Domain/Application e Infrastructure
 - [ ] Testes unitários das entidades já criadas (`ControleMultEstoque.Domain.Tests`)
 
 ### Application
@@ -126,3 +151,7 @@ Projetos de inicialização configurados no Visual Studio: `ControleMultEstoque.
 - [ ] Vídeo de demonstração (até 5 min) para entrega
 
 ---
+
+## Como continuar
+
+Este README deve ser atualizado conforme cada etapa do roadmap for concluída, marcando os itens com `[x]`. Ele serve como registro do progresso e também conta pontos na avaliação de **Governança do Repositório** e **Documentação Técnica** do regulamento do hackathon.
