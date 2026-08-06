@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ControleMultEstoque.Domain.Entities
+namespace ControleMultEstoque.Domain.Enums
 {
-    internal class PapelUsuario
+    public enum PapelUsuario
     {
+        AdministradorGeral,
+        Responsavel
     }
 }
