@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ControleMultEstoque.Domain.Interfaces
+using ControleMultEstoque.Domain.Entities;
+
+namespace ControleMultEstoque.Domain.Interfaces;
+
+public interface IProdutoRepository : IRepositorioBase<Produto>
 {
-    internal interface IProdutoRepository
-    {
-    }
+    Task<Produto?> ObterPorSkuAsync(string sku);
+    Task<bool> SkuJaExisteAsync(string sku);
 }
